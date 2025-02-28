@@ -14,7 +14,7 @@ const STARTING_LIVES = 3;
 // ==== Game State ====
 let game = {
     state: 'loading', // loading, title, character-select, level-select, playing, paused, level-complete, game-over
-    debug: false,
+    debug: true, // Set to true to enable debug logging and additional functionality
     score: 0,
     rings: 0,
     lives: STARTING_LIVES,
@@ -499,6 +499,11 @@ document.querySelectorAll('.level').forEach(level => {
 let keyState = {};
 
 document.addEventListener('keydown', (e) => {
+    // Log key presses when in playing state
+    if (game.state === 'playing') {
+        console.log(`Key pressed: ${e.code} (game state: ${game.state})`);
+    }
+    
     keyState[e.code] = true;
     
     // Pause game
@@ -509,12 +514,69 @@ document.addEventListener('keydown', (e) => {
     // Debug mode toggle
     if (e.code === 'KeyD' && e.ctrlKey && e.shiftKey) {
         game.debug = !game.debug;
+        console.log(`Debug mode: ${game.debug ? 'ON' : 'OFF'}`);
+    }
+    
+    // Handle direct controls for character selection with arrow keys
+    if (game.state === 'character-select') {
+        handleCharacterSelectKeys(e);
+    }
+    
+    // Handle level selection with arrow keys
+    if (game.state === 'level-select') {
+        handleLevelSelectKeys(e);
+    }
+    
+    // Force-start the first level for testing when in character select
+    if (game.state === 'character-select' && e.code === 'Enter' && player.character) {
+        console.log('Force starting first level via Enter key');
+        game.currentLevel = 'green-hills';
+        startLevel(game.currentLevel);
     }
 });
 
 document.addEventListener('keyup', (e) => {
     keyState[e.code] = false;
 });
+
+// Helper functions for keyboard navigation
+function handleCharacterSelectKeys(e) {
+    const characters = ['sonic', 'tails', 'knuckles', 'shadow', 'amy'];
+    const currentIndex = player.character ? characters.indexOf(player.character) : -1;
+    
+    if (e.code === 'ArrowRight') {
+        const nextIndex = currentIndex < characters.length - 1 ? currentIndex + 1 : 0;
+        selectCharacter(characters[nextIndex]);
+    } else if (e.code === 'ArrowLeft') {
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : characters.length - 1;
+        selectCharacter(characters[prevIndex]);
+    } else if (e.code === 'Space' || e.code === 'Enter') {
+        if (player.character) {
+            showLevelSelect();
+        } else {
+            selectCharacter('sonic'); // Default to sonic if none selected
+        }
+    }
+}
+
+function handleLevelSelectKeys(e) {
+    const levels = ['green-hills', 'chemical-plant', 'casino-night'];
+    const currentIndex = game.currentLevel ? levels.indexOf(game.currentLevel) : -1;
+    
+    if (e.code === 'ArrowRight') {
+        const nextIndex = currentIndex < levels.length - 1 ? currentIndex + 1 : 0;
+        selectLevel(levels[nextIndex]);
+    } else if (e.code === 'ArrowLeft') {
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : levels.length - 1;
+        selectLevel(levels[prevIndex]);
+    } else if (e.code === 'Space' || e.code === 'Enter') {
+        if (game.currentLevel) {
+            startLevel(game.currentLevel);
+        } else {
+            selectLevel('green-hills'); // Default to green hills if none selected
+        }
+    }
+}
 
 // ==== Game Initialization ====
 function init() {
@@ -719,7 +781,16 @@ function selectLevel(levelId) {
     document.querySelectorAll('.level').forEach(el => {
         el.classList.remove('selected');
     });
-    document.querySelector(`.level[data-level="${levelId}"]`).classList.add('selected');
+    
+    const selectedElement = document.querySelector(`.level[data-level="${levelId}"]`);
+    if (selectedElement) {
+        selectedElement.classList.add('selected');
+    } else {
+        console.warn(`Level element not found: ${levelId}`);
+    }
+    
+    // Log state before transition
+    console.log(`Starting level: ${levelId}, Character: ${player.character}`);
     
     // Start the level after a short delay
     setTimeout(() => startLevel(levelId), 500);
@@ -796,66 +867,221 @@ function loadLevel(levelId) {
     
     // Load level configuration
     const levelData = levels[levelId];
-    level.width = levelData.width;
-    level.height = levelData.height;
-    level.bounds.right = levelData.width;
-    level.bounds.bottom = levelData.height;
     
-    // Set background images
-    domElements.background.far.style.backgroundImage = `url('images/bg-far.png')`;
-    domElements.background.mid.style.backgroundImage = `url('images/bg-mid.png')`;
-    domElements.foreground.style.backgroundImage = `url('images/fg.png')`;
+    if (!levelData) {
+        console.error(`Level data not found for: ${levelId}`);
+        createFallbackLevel();
+        return;
+    }
+    
+    level.width = levelData.width || 5000;
+    level.height = levelData.height || 720;
+    level.bounds.right = level.width;
+    level.bounds.bottom = level.height;
+    
+    // Set background images with fallbacks
+    try {
+        if (domElements.background.far) {
+            domElements.background.far.style.backgroundImage = `url('images/bg-far.png')`;
+            domElements.background.far.style.backgroundColor = '#000066'; // Fallback color
+        }
+        
+        if (domElements.background.mid) {
+            domElements.background.mid.style.backgroundImage = `url('images/bg-mid.png')`;
+            domElements.background.mid.style.backgroundColor = '#000099'; // Fallback color
+        }
+        
+        if (domElements.foreground) {
+            domElements.foreground.style.backgroundImage = `url('images/fg.png')`;
+        }
+    } catch (e) {
+        console.warn("Error setting background images:", e);
+    }
     
     // Create platforms
-    levelData.platforms.forEach(platform => {
-        createPlatform(platform.x, platform.y, platform.width, platform.height);
-    });
+    if (levelData.platforms && levelData.platforms.length > 0) {
+        levelData.platforms.forEach(platform => {
+            createPlatform(platform.x, platform.y, platform.width, platform.height);
+        });
+    } else {
+        // Create fallback ground platform if none exist
+        console.log("No platforms found, creating fallback ground");
+        createPlatform(0, 600, level.width, 120);
+    }
+    
+    // Check if we have any level elements and create fallbacks if needed
+    let hasAnyRings = false;
     
     // Create springs
-    levelData.springs?.forEach(spring => {
-        createSpring(spring.x, spring.y, spring.type);
-    });
+    if (levelData.springs && levelData.springs.length > 0) {
+        levelData.springs.forEach(spring => {
+            createSpring(spring.x, spring.y, spring.type);
+        });
+    } else {
+        // Add a few springs in fallback mode
+        if (game.debug) {
+            createSpring(400, 570, 'red');
+            createSpring(1200, 570, 'yellow');
+        }
+    }
     
     // Create rings
-    levelData.rings?.forEach(ring => {
-        createRing(ring.x, ring.y);
-    });
+    if (levelData.rings && levelData.rings.length > 0) {
+        levelData.rings.forEach(ring => {
+            createRing(ring.x, ring.y);
+        });
+        hasAnyRings = true;
+    } 
+    
+    // Create fallback rings if none exist
+    if (!hasAnyRings) {
+        console.log("No rings found, creating fallback rings");
+        // Create a simple pattern of rings
+        for (let i = 0; i < 20; i++) {
+            createRing(300 + i * 50, 450);
+        }
+        
+        // Add a vertical line of rings
+        for (let i = 0; i < 5; i++) {
+            createRing(800, 500 - i * 50);
+        }
+        
+        // Add a circle of rings
+        const centerX = 1500;
+        const centerY = 400;
+        const radius = 100;
+        const ringCount = 12;
+        
+        for (let i = 0; i < ringCount; i++) {
+            const angle = (Math.PI * 2 / ringCount) * i;
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius;
+            createRing(x, y);
+        }
+    }
     
     // Create enemies
-    levelData.enemies?.forEach(enemy => {
-        createEnemy(enemy.x, enemy.y, enemy.type, enemy.direction);
-    });
+    if (levelData.enemies && levelData.enemies.length > 0) {
+        levelData.enemies.forEach(enemy => {
+            createEnemy(enemy.x, enemy.y, enemy.type, enemy.direction);
+        });
+    } else if (game.debug) {
+        // Add a few enemies in fallback mode
+        createEnemy(800, 550, 'crabmeat', 'left');
+        createEnemy(1500, 550, 'buzzbomber', 'left');
+    }
     
     // Create spikes
-    levelData.spikes?.forEach(spike => {
-        createSpike(spike.x, spike.y);
-    });
+    if (levelData.spikes && levelData.spikes.length > 0) {
+        levelData.spikes.forEach(spike => {
+            createSpike(spike.x, spike.y);
+        });
+    }
     
     // Create loops
-    levelData.loops?.forEach(loop => {
-        createLoop(loop.x, loop.y, loop.width, loop.height);
-    });
+    if (levelData.loops && levelData.loops.length > 0) {
+        levelData.loops.forEach(loop => {
+            createLoop(loop.x, loop.y, loop.width, loop.height);
+        });
+    }
     
     // Create item boxes
-    levelData.itemBoxes?.forEach(box => {
-        createItemBox(box.x, box.y, box.type);
-    });
+    if (levelData.itemBoxes && levelData.itemBoxes.length > 0) {
+        levelData.itemBoxes.forEach(box => {
+            createItemBox(box.x, box.y, box.type);
+        });
+    } else if (game.debug) {
+        // Add a few item boxes in fallback mode
+        createItemBox(600, 500, 'rings');
+        createItemBox(1000, 500, 'shield');
+    }
     
     // Create checkpoint
     if (levelData.checkpoint) {
         createCheckpoint(levelData.checkpoint.x, levelData.checkpoint.y);
-        level.checkpoint = { x: levelData.checkpoint.x, y: levelData.checkpoint.y };
+        level.checkpoint = { 
+            x: levelData.checkpoint.x, 
+            y: levelData.checkpoint.y,
+            activated: false
+        };
+    } else if (game.debug) {
+        // Create a fallback checkpoint
+        createCheckpoint(2000, 520);
+        level.checkpoint = { x: 2000, y: 520, activated: false };
     }
     
     // Create goal
     if (levelData.goal) {
         createGoal(levelData.goal.x, levelData.goal.y);
-        level.goal = { x: levelData.goal.x, y: levelData.goal.y };
+        level.goal = { 
+            x: levelData.goal.x, 
+            y: levelData.goal.y,
+            reached: false
+        };
+    } else if (game.debug) {
+        // Create a fallback goal
+        createGoal(4500, 500);
+        level.goal = { x: 4500, y: 500, reached: false };
     }
     
     // Reset camera
     level.camera.x = 0;
     level.camera.y = 0;
+    
+    console.log(`Level "${levelId}" loaded with ${level.platforms.length} platforms, ${level.rings.length} rings`);
+}
+
+// Create a simple level when no level data is available
+function createFallbackLevel() {
+    console.log("Creating fallback level");
+    
+    // Set level dimensions
+    level.width = 5000;
+    level.height = 720;
+    level.bounds.right = level.width;
+    level.bounds.bottom = level.height;
+    
+    // Create ground
+    createPlatform(0, 600, 1200, 120);
+    createPlatform(1350, 600, 800, 120);
+    createPlatform(2300, 600, 1000, 120);
+    createPlatform(3400, 600, 1600, 120);
+    
+    // Create some platforms
+    createPlatform(400, 450, 200, 30);
+    createPlatform(700, 350, 200, 30);
+    createPlatform(1000, 250, 200, 30);
+    createPlatform(1500, 400, 300, 30);
+    createPlatform(2000, 350, 300, 30);
+    
+    // Create rings
+    for (let i = 0; i < 30; i++) {
+        createRing(300 + i * 60, 400);
+    }
+    
+    // Create a ring pattern
+    const centerX = 1500;
+    const centerY = 300;
+    for (let i = 0; i < 12; i++) {
+        const angle = (Math.PI * 2 / 12) * i;
+        const x = centerX + Math.cos(angle) * 100;
+        const y = centerY + Math.sin(angle) * 100;
+        createRing(x, y);
+    }
+    
+    // Add a few enemies
+    createEnemy(800, 550, 'crabmeat', 'left');
+    createEnemy(1600, 550, 'buzzbomber', 'left');
+    createEnemy(2500, 550, 'motobug', 'left');
+    
+    // Add checkpoint and goal
+    createCheckpoint(2000, 520);
+    level.checkpoint = { x: 2000, y: 520, activated: false };
+    
+    createGoal(4500, 500);
+    level.goal = { x: 4500, y: 500, reached: false };
+    
+    console.log("Fallback level created successfully");
 }
 
 function clearGameElements() {
@@ -1094,15 +1320,60 @@ const gameLoop = {
 
 // ==== Player Movement & Physics ====
 function updatePlayer(deltaTime) {
+    // Debug log player state occasionally
+    if (game.debug && Math.random() < 0.01) {
+        console.log(`Player: pos(${Math.round(player.x)},${Math.round(player.y)}), vel(${player.velocityX.toFixed(2)},${player.velocityY.toFixed(2)}), state: ${player.jumping ? 'jumping' : player.falling ? 'falling' : 'ground'}`);
+    }
+    
+    // Make sure character properties are applied
+    if (!player.maxSpeed && player.character) {
+        console.log("Reapplying character properties");
+        const char = characters[player.character];
+        if (char) {
+            player.maxSpeed = char.maxSpeed;
+            player.acceleration = char.acceleration;
+            player.jumpPower = char.jumpPower;
+        } else {
+            // Default values if character properties aren't available
+            player.maxSpeed = 8;
+            player.acceleration = 0.3;
+            player.jumpPower = 14;
+        }
+    }
+    
+    // Force player to be visible and have some styling
+    if (domElements.player) {
+        domElements.player.style.display = "block";
+        
+        // Ensure player has visible styling if not already set
+        if (!domElements.player.style.backgroundColor && !domElements.player.style.backgroundImage) {
+            domElements.player.style.backgroundColor = player.character && characters[player.character] ? 
+                characters[player.character].color : '#1a75ff';
+            domElements.player.style.borderRadius = '50%';
+            domElements.player.style.boxShadow = '0 0 5px rgba(0, 0, 0, 0.5)';
+        }
+    }
+    
     // Handle keyboard input
-    if (keyState['ArrowLeft'] || keyState['KeyA']) {
-        player.velocityX -= player.acceleration;
+    const leftPressed = keyState['ArrowLeft'] || keyState['KeyA'];
+    const rightPressed = keyState['ArrowRight'] || keyState['KeyD'];
+    const jumpPressed = keyState['Space'] || keyState['ArrowUp'] || keyState['KeyW'];
+    const specialPressed = keyState['KeyS'];
+    
+    // Log control state for debugging
+    if (game.debug && Math.random() < 0.01) {
+        console.log(`Controls: left=${leftPressed}, right=${rightPressed}, jump=${jumpPressed}`);
+    }
+    
+    // Movement
+    if (leftPressed) {
+        player.velocityX -= player.acceleration || 0.3; // Default acceleration if not set
         player.direction = 'left';
         if (!player.jumping && !player.falling && !player.rolling) {
             player.currentAnimation = 'run';
         }
-    } else if (keyState['ArrowRight'] || keyState['KeyD']) {
-        player.velocityX += player.acceleration;
+    } else if (rightPressed) {
+        player.velocityX += player.acceleration || 0.3; // Default acceleration if not set
         player.direction = 'right';
         if (!player.jumping && !player.falling && !player.rolling) {
             player.currentAnimation = 'run';
@@ -1119,26 +1390,42 @@ function updatePlayer(deltaTime) {
         }
     }
     
-    // Jumping
-    if ((keyState['Space'] || keyState['ArrowUp'] || keyState['KeyW']) && !player.jumping && !player.falling) {
-        player.jumping = true;
-        player.velocityY = -player.jumpPower;
-        player.currentAnimation = 'jump';
-        assets.playSound('sfx-jump', 0.7);
+    // Simple jump triggering with automatic grounding
+    if (jumpPressed) {
+        // Auto-ground player initially if we're just starting
+        if (game.levelTime < 1 && player.y <= 0) {
+            console.log("Auto-grounding player");
+            player.y = 500; // Position player on ground
+            player.jumping = false;
+            player.falling = false;
+        }
+        
+        if (!player.jumping && !player.falling) {
+            console.log("Player jumping!");
+            player.jumping = true;
+            player.velocityY = -(player.jumpPower || 14); // Default jump power if not set
+            player.currentAnimation = 'jump';
+            try {
+                assets.playSound('sfx-jump', 0.7);
+            } catch (e) {
+                console.warn("Cannot play jump sound:", e);
+            }
+        }
     }
     
     // Special ability
-    if (keyState['KeyS'] && player.specialCooldown <= 0) {
+    if (specialPressed && player.specialCooldown <= 0) {
         useSpecialAbility();
     }
     
     // Apply physics
     
     // Limit horizontal speed
-    if (player.velocityX > player.maxSpeed) {
-        player.velocityX = player.maxSpeed;
-    } else if (player.velocityX < -player.maxSpeed) {
-        player.velocityX = -player.maxSpeed;
+    const maxSpeed = player.maxSpeed || 8; // Default max speed if not set
+    if (player.velocityX > maxSpeed) {
+        player.velocityX = maxSpeed;
+    } else if (player.velocityX < -maxSpeed) {
+        player.velocityX = -maxSpeed;
     }
     
     // Apply gravity
@@ -1173,12 +1460,23 @@ function updatePlayer(deltaTime) {
         player.y = level.bounds.top;
         player.velocityY = 0;
     } else if (player.y + player.height > level.bounds.bottom) {
-        playerDie();
+        // Simple respawn rather than dying when testing
+        if (game.debug) {
+            console.log("Player fell out of bounds, respawning");
+            player.y = 300;
+            player.velocityY = 0;
+        } else {
+            playerDie();
+        }
     }
     
     // Update player element position
-    domElements.player.style.left = `${player.x}px`;
-    domElements.player.style.top = `${player.y}px`;
+    if (domElements.player) {
+        domElements.player.style.left = `${Math.round(player.x)}px`;
+        domElements.player.style.top = `${Math.round(player.y)}px`;
+    } else {
+        console.error("Player element not found!");
+    }
     
     // Update player animation
     updatePlayerAnimation(deltaTime);
@@ -1194,15 +1492,24 @@ function updatePlayer(deltaTime) {
         
         // Blinking effect
         if (Math.floor(player.invincibilityTimer * 10) % 2 === 0) {
-            domElements.player.style.opacity = '0.5';
+            if (domElements.player) domElements.player.style.opacity = '0.5';
         } else {
-            domElements.player.style.opacity = '1';
+            if (domElements.player) domElements.player.style.opacity = '1';
         }
         
         if (player.invincibilityTimer <= 0) {
             player.invincible = false;
-            domElements.player.style.opacity = '1';
+            if (domElements.player) domElements.player.style.opacity = '1';
         }
+    }
+    
+    // Simple floor test - auto ground the player if no platforms exist yet
+    let hasGroundPlatform = level.platforms && level.platforms.length > 0;
+    if (!hasGroundPlatform && player.y > 500 && player.velocityY > 0) {
+        player.y = 500;
+        player.velocityY = 0;
+        player.jumping = false;
+        player.falling = false;
     }
 }
 
