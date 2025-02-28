@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonic Adventure</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/fallback.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <div id="loading-screen">
+            <h1>SONIC ADVENTURE</h1>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            <p>Loading game assets...</p>
+        </div>
+        
+        <div id="title-screen" style="display: none;">
+            <h1>SONIC ADVENTURE</h1>
+            <div class="title-logo"></div>
+            <button id="start-button" class="arcade-button">PRESS START</button>
+            <div class="title-animation"></div>
+        </div>
+
+        <div id="character-select" style="display: none;">
+            <h1>SELECT CHARACTER</h1>
+            <div class="characters">
+                <div class="character-container">
+                    <div class="character" data-character="sonic">
+                        <div class="character-sprite sonic-sprite"></div>
+                        <div class="character-name">SONIC</div>
+                        <div class="character-stats">
+                            <div class="stat">SPEED: <span class="stat-bar sonic-speed"></span></div>
+                            <div class="stat">JUMP: <span class="stat-bar sonic-jump"></span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="character-container">
+                    <div class="character" data-character="tails">
+                        <div class="character-sprite tails-sprite"></div>
+                        <div class="character-name">TAILS</div>
+                        <div class="character-stats">
+                            <div class="stat">SPEED: <span class="stat-bar tails-speed"></span></div>
+                            <div class="stat">JUMP: <span class="stat-bar tails-jump"></span></div>
+                            <div class="stat">FLIGHT: <span class="stat-bar tails-flight"></span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="character-container">
+                    <div class="character" data-character="knuckles">
+                        <div class="character-sprite knuckles-sprite"></div>
+                        <div class="character-name">KNUCKLES</div>
+                        <div class="character-stats">
+                            <div class="stat">SPEED: <span class="stat-bar knuckles-speed"></span></div>
+                            <div class="stat">POWER: <span class="stat-bar knuckles-power"></span></div>
+                            <div class="stat">CLIMB: <span class="stat-bar knuckles-climb"></span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="character-container">
+                    <div class="character" data-character="shadow">
+                        <div class="character-sprite shadow-sprite"></div>
+                        <div class="character-name">SHADOW</div>
+                        <div class="character-stats">
+                            <div class="stat">SPEED: <span class="stat-bar shadow-speed"></span></div>
+                            <div class="stat">CHAOS: <span class="stat-bar shadow-chaos"></span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="character-container">
+                    <div class="character" data-character="amy">
+                        <div class="character-sprite amy-sprite"></div>
+                        <div class="character-name">AMY</div>
+                        <div class="character-stats">
+                            <div class="stat">SPEED: <span class="stat-bar amy-speed"></span></div>
+                            <div class="stat">JUMP: <span class="stat-bar amy-jump"></span></div>
+                            <div class="stat">HAMMER: <span class="stat-bar amy-hammer"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="select-prompt">← → to select, SPACE to confirm</div>
+        </div>
+        
+        <div id="level-select" style="display: none;">
+            <h1>SELECT ZONE</h1>
+            <div class="levels">
+                <div class="level" data-level="green-hills">
+                    <div class="level-preview green-hills-preview"></div>
+                    <div class="level-name">GREEN HILLS ZONE</div>
+                </div>
+                <div class="level" data-level="chemical-plant">
+                    <div class="level-preview chemical-plant-preview"></div>
+                    <div class="level-name">CHEMICAL PLANT ZONE</div>
+                </div>
+                <div class="level" data-level="casino-night">
+                    <div class="level-preview casino-night-preview"></div>
+                    <div class="level-name">CASINO NIGHT ZONE</div>
+                </div>
+            </div>
+            <div class="select-prompt">← → to select, SPACE to confirm</div>
+        </div>
+        
+        <div id="game-screen" style="display: none;">
+            <div class="hud">
+                <div id="score">SCORE: 0</div>
+                <div id="rings">RINGS: 0</div>
+                <div id="time">TIME: 0:00</div>
+                <div id="lives">LIVES: 3</div>
+            </div>
+            <div id="game-world">
+                <div id="background-far" class="parallax-layer"></div>
+                <div id="background-mid" class="parallax-layer"></div>
+                <div id="game-layer">
+                    <div id="player"></div>
+                </div>
+                <div id="foreground" class="parallax-layer"></div>
+            </div>
+            <div id="pause-menu" style="display: none;">
+                <div class="pause-content">
+                    <h2>PAUSED</h2>
+                    <button id="resume-button" class="arcade-button">RESUME</button>
+                    <button id="restart-button" class="arcade-button">RESTART</button>
+                    <button id="quit-button" class="arcade-button">QUIT</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="level-complete" style="display: none;">
+            <h2>ZONE CLEARED!</h2>
+            <div class="results">
+                <div class="result-row">TIME BONUS: <span id="time-bonus">0</span></div>
+                <div class="result-row">RING BONUS: <span id="ring-bonus">0</span></div>
+                <div class="result-row">TOTAL: <span id="level-score">0</span></div>
+            </div>
+            <button id="continue-button" class="arcade-button">CONTINUE</button>
+        </div>
+        
+        <div id="game-over" style="display: none;">
+            <h2>GAME OVER</h2>
+            <p>YOUR SCORE: <span id="final-score">0</span></p>
+            <button id="play-again" class="arcade-button">PLAY AGAIN</button>
+            <button id="main-menu" class="arcade-button">MAIN MENU</button>
+        </div>
+    </div>
+    
+    <div id="controls-overlay">
+        <div class="control-info">
+            <div class="key-icon">←</div><div class="key-label">MOVE LEFT</div>
+        </div>
+        <div class="control-info">
+            <div class="key-icon">→</div><div class="key-label">MOVE RIGHT</div>
+        </div>
+        <div class="control-info">
+            <div class="key-icon">SPACE</div><div class="key-label">JUMP</div>
+        </div>
+        <div class="control-info">
+            <div class="key-icon">S</div><div class="key-label">SPECIAL</div>
+        </div>
+        <div class="control-info">
+            <div class="key-icon">P</div><div class="key-label">PAUSE</div>
+        </div>
+    </div>
+    
+    <audio id="bgm" loop></audio>
+    <audio id="sfx-jump"></audio>
+    <audio id="sfx-ring"></audio>
+    <audio id="sfx-hurt"></audio>
+    
+    <script src="js/game.js"></script>
+</body>
+</html>

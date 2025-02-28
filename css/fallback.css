@@ -1,0 +1,107 @@
+/* Fallback styles when images are missing */
+
+/* Backgrounds */
+#title-screen {
+    background: linear-gradient(to bottom, #0033cc, #000066);
+}
+
+.title-logo {
+    background: linear-gradient(to bottom, #ffcc00, #ff6600);
+    border-radius: 10px;
+    border: 5px solid #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.title-animation {
+    background-color: #1a75ff;
+    border-radius: 50%;
+    animation: bounce 0.5s infinite alternate;
+}
+
+/* Character icons */
+.sonic-sprite { background-color: #1a75ff; }
+.tails-sprite { background-color: #ff9900; }
+.knuckles-sprite { background-color: #cc0000; }
+.shadow-sprite { background-color: #333333; }
+.amy-sprite { background-color: #ff66b2; }
+
+/* Level previews */
+.green-hills-preview { 
+    background: linear-gradient(to bottom, #33cc33, #006600);
+}
+.chemical-plant-preview { 
+    background: linear-gradient(to bottom, #9933cc, #660099);
+}
+.casino-night-preview { 
+    background: linear-gradient(to bottom, #ff9900, #cc6600);
+}
+
+/* Background layers */
+#background-far {
+    background-color: #000066;
+}
+#background-mid {
+    background-color: #000099;
+}
+#foreground {
+    background-color: transparent;
+}
+
+/* Game elements */
+.platform {
+    background-color: #009900;
+    border-top: 2px solid #00cc00;
+}
+
+.spring {
+    background-color: #ff3333;
+    border: 2px solid #ffffff;
+}
+
+.ring {
+    background-color: #ffcc00;
+    border-radius: 50%;
+    box-shadow: 0 0 5px #ffffff;
+}
+
+.enemy {
+    background-color: #cc0000;
+    border-radius: 10px;
+}
+
+.spike {
+    background-color: #999999;
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+.loop {
+    background-color: #006600;
+    border-radius: 50%;
+}
+
+.checkpoint {
+    background-color: #00ccff;
+    border: 2px solid #ffffff;
+}
+
+.goal {
+    background-color: #ffcc00;
+    border: 5px solid #ff6600;
+}
+
+.item-box {
+    background-color: #ff6600;
+    border: 4px solid #ffcc00;
+}
+
+/* Simple player animation */
+@keyframes playerRun {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+    100% { transform: translateY(0); }
+}
+
+#player {
+    border-radius: 50%;
+    animation: playerRun 0.3s infinite;
+}

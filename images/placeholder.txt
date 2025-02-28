@@ -1,0 +1,8 @@
+You'll need the following images:
+
+1. background.png - A side-scrolling platformer background (Green Hills style)
+2. ring.png - Golden ring icon
+3. Character sprites for Sonic, Tails, Knuckles, Shadow, and Amy
+
+You can find free Sonic-themed images online or create simple placeholder images.
+For now, the game uses colored blocks for characters and objects.

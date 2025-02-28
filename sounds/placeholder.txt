@@ -1,0 +1,28 @@
+You'll need the following sound files:
+
+1. BGM (Background Music):
+   - bgm-title.mp3 - Title screen music
+   - bgm-green-hills.mp3 - Green Hills Zone music
+   - bgm-chemical-plant.mp3 - Chemical Plant Zone music
+   - bgm-casino-night.mp3 - Casino Night Zone music
+
+2. SFX (Sound Effects):
+   - sfx-jump.mp3 - Jumping sound
+   - sfx-ring.mp3 - Collecting ring sound
+   - sfx-hurt.mp3 - Player getting hit sound
+   - sfx-death.mp3 - Player death sound
+   - sfx-spring.mp3 - Spring bounce sound
+   - sfx-checkpoint.mp3 - Checkpoint activation sound
+   - sfx-item-box.mp3 - Breaking item box sound
+   - sfx-goal.mp3 - Reaching goal sound
+   - sfx-level-complete.mp3 - Level complete jingle
+   - sfx-game-over.mp3 - Game over sound
+
+3. Character-specific sounds:
+   - sfx-sonic-spin.mp3 - Sonic's spin dash sound
+   - sfx-tails-fly.mp3 - Tails' flying sound
+   - sfx-knuckles-glide.mp3 - Knuckles' gliding sound
+   - sfx-shadow-chaos.mp3 - Shadow's chaos control sound
+   - sfx-amy-hammer.mp3 - Amy's hammer attack sound
+
+You can find free Sonic-themed sound effects and music online, or use placeholder sounds for development.
